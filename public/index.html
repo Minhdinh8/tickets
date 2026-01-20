@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ticket Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: linear-gradient(180deg,#071129 0%, #041022 100%); color: #e6eef8; }
+    .glass { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.04); backdrop-filter: blur(6px); }
+    .muted { color: #9fb0c9; }
+    textarea { min-height: 72px; }
+    .scroll-y { max-height: 44vh; overflow: auto; }
+    .discord-preview { background:#2f3136;border-radius:8px;padding:12px;color:#dcddde; }
+    .embed-preview { background:#202225;border-left:4px solid #2ea043;padding:10px;border-radius:6px;margin-top:8px; }
+    .draggable { cursor: grab; }
+    .drag-over { outline: 2px dashed rgba(255,255,255,0.12); }
+  </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+  <div class="max-w-6xl mx-auto p-6">
+    <header class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-semibold">Ticket Dashboard</h1>
+        <p class="muted text-sm">Configure panel, per-option respond, form builder and prefixes.</p>
+      </div>
+      <div>
+        <button id="saveBtn" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 rounded text-white">Save</button>
+      </div>
+    </header>
+
+    <main class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <section class="glass rounded-lg p-4 lg:col-span-2">
+        <div class="grid gap-3 lg:grid-cols-3 mb-4">
+          <div>
+            <label class="text-sm muted">Server</label>
+            <select id="guildSelect" class="w-full mt-1 px-3 py-2 bg-transparent border border-slate-700 rounded"></select>
+          </div>
+          <div>
+            <label class="text-sm muted">Channel (post panel)</label>
+            <select id="channelSelect" class="w-full mt-1 px-3 py-2 bg-transparent border border-slate-700 rounded"></select>
+          </div>
+          <div class="flex items-end">
+            <button id="postPanelBtn" class="w-full px-3 py-2 bg-indigo-600 hover:bg-indigo-700 rounded text-white">Post Panel</button>
+          </div>
+        </div>
+
+        <div class="grid gap-4 lg:grid-cols-2">
+          <div>
+            <label class="text-sm muted">Panel Embed Title</label>
+            <input id="panelTitle" class="w-full mt-1 px-3 py-2 bg-transparent border border-slate-700 rounded" />
+          </div>
+          <div>
+            <label class="text-sm muted">Panel Embed Color (hex)</label>
+            <input id="panelColor" class="w-full mt-1 px-3 py-2 bg-transparent border border-slate-700 rounded" placeholder="#1E90FF" />
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <label class="text-sm muted">Panel Embed Description</label>
+          <textarea id="panelDescription" class="w-full mt-1 px-3 py-2 bg-transparent border border-slate-700 rounded"></textarea>
+        </div>
+
+        <div class="mt-4">
+          <label class="text-sm muted">Ticket Category</label>
+          <select id="categorySelect" class="w-full mt-1 px-3 py-2 bg-transparent border border-slate-700 rounded"><option value="">— choose category —</option></select>
+        </div>
+
+        <hr class="my-4 border-slate-700" />
+
+        <div class="mb-4">
+          <h3 class="text-lg font-medium">Respond defaults</h3>
+          <div class="mt-2">
+            <label class="small">Global opening text (used if option has no respondContent)</label>
+            <textarea id="respondOpening" class="w-full mt-1 px-3 py-2 bg-transparent border border-slate-700 rounded"></textarea>
+            <div class="mt-2">
+              <label class="small">Details embed title</label>
+              <input id="detailsEmbedTitle" class="w-full mt-1 px-3 py-2 bg-transparent border border-slate-700 rounded" />
+              <label class="small">Details embed color</label>
+              <input id="detailsEmbedColor" class="w-full mt-1 px-3 py-2 bg-transparent border border-slate-700 rounded" />
+            </div>
+          </div>
+        </div>
+
+        <hr class="my-4 border-slate-700" />
+
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-lg font-medium">Options & Form Builder</h2>
+          <div class="flex items-center gap-2">
+            <button id="addOptionBtn" class="px-3 py-1 bg-sky-600 hover:bg-sky-700 rounded text-white">+ Add option</button>
+            <button id="exampleBtn" class="px-3 py-1 bg-amber-600 hover:bg-amber-700 rounded text-white">Load Example</button>
+          </div>
+        </div>
+
+        <div id="optionsContainer" class="space-y-3 scroll-y pr-2"></div>
+
+        <hr class="my-4 border-slate-700" />
+
+        <div>
+          <h3 class="text-lg font-medium">Pinned / Sticky Message</h3>
+          <div class="mt-2">
+            <textarea id="pinnedContent" class="w-full mt-1 px-3 py-2 bg-transparent border border-slate-700 rounded" placeholder="Optional pinned message content"></textarea>
+            <div class="flex items-center gap-4 mt-2">
+              <label class="muted"><input type="checkbox" id="enabledPinned" /> Enable</label>
+              <label class="muted"><input type="checkbox" id="pinAfterPost" /> Pin after posting</label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="glass rounded-lg p-4">
+        <div class="mb-4">
+          <h3 class="text-lg font-medium">Discord-like Preview</h3>
+          <div id="discordPreview" class="discord-preview mt-3">
+            <div id="previewHeader" class="flex items-center gap-3">
+              <div style="width:40px;height:40px;background:#36393f;border-radius:6px;"></div>
+              <div>
+                <div id="previewTitle" class="font-semibold">Panel Title</div>
+                <div id="previewDesc" class="muted text-xs">Panel description</div>
+              </div>
+            </div>
+
+            <div class="embed-preview" id="embedPreviewArea">
+              <div id="previewEmbedTitle" class="font-medium">Details</div>
+              <div id="previewEmbedFields" class="mt-2 text-sm muted">Form fields will appear here</div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-medium">Notes</h3>
+          <div class="muted text-sm mt-2">
+            <div>- Panel embed remains clean (options hidden on embed). Use the select to open tickets.</div>
+            <div>- If option.isPrize is enabled, a required prizeAmount field will be added automatically.</div>
+            <div>- For non-prize options, only the respond message will be sent when opening a ticket (no details embed).</div>
+            <div>- Placeholders: <strong>{user}</strong>, <strong>{summary}</strong>, <strong>[prize amount]</strong>.</div>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- option template -->
+  <template id="optionTpl">
+    <div class="option-item p-3 glass rounded border border-slate-700 draggable" draggable="true">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex-1">
+          <div class="flex gap-2 items-center">
+            <input class="opt-id bg-slate-800 px-2 py-1 rounded text-xs text-slate-300" readonly />
+            <input class="opt-prefix w-20 bg-transparent px-2 py-1 rounded" placeholder="Prefix" title="ticket prefix e.g. PRZ" />
+            <input class="opt-label flex-1 bg-transparent px-2 py-1 rounded" placeholder="Label (e.g. Prize / Payout)" />
+            <label class="text-sm muted flex items-center gap-1"><input type="checkbox" class="opt-isPrize" /> <span class="ml-1">isPrize</span></label>
+          </div>
+          <div class="mt-2 grid gap-2">
+            <input class="opt-desc bg-transparent px-2 py-1 rounded" placeholder="Short description (shown in dropdown)" />
+            <div class="mt-2">
+              <label class="small">Form fields</label>
+              <div class="fieldsList space-y-2 mt-2"></div>
+              <div class="mt-2 flex gap-2">
+                <button class="addFieldBtn px-2 py-1 bg-sky-600 rounded text-white">+ Add field</button>
+                <button class="removeAllFieldsBtn px-2 py-1 bg-red-600 rounded text-white">Remove all</button>
+                <button class="showModalBtn px-2 py-1 bg-indigo-600 rounded text-white">Show sample modal</button>
+              </div>
+            </div>
+
+            <div class="mt-2">
+              <label class="small">Respond message for this option (use {user} and {summary})</label>
+              <textarea class="opt-respond bg-transparent px-2 py-1 rounded" placeholder="Respond content..."></textarea>
+              <label class="muted"><input type="checkbox" class="opt-respondUseEmbed" /> Use embed for respond</label>
+            </div>
+
+            <div class="mt-2">
+              <label class="muted"><input type="checkbox" class="include-adjustprize" /> Include Adjust Prize (admin)</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col items-end gap-2 ml-3">
+          <button class="btn-up text-xs px-2 py-1 bg-slate-700 rounded">↑</button>
+          <button class="btn-down text-xs px-2 py-1 bg-slate-700 rounded">↓</button>
+          <button class="btn-remove text-xs px-2 py-1 bg-red-600 rounded text-white">Remove</button>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template id="fieldTpl">
+    <div class="field-item p-2 border border-slate-700 rounded">
+      <div class="flex gap-2 items-start">
+        <input class="field-id bg-slate-800 px-2 py-1 rounded text-xs text-slate-300" readonly style="width:110px" />
+        <div class="flex-1">
+          <input class="field-label w-full bg-transparent px-2 py-1 rounded" placeholder="Field label" />
+          <div class="flex gap-2 mt-2">
+            <select class="field-style bg-transparent px-2 py-1 rounded">
+              <option value="short">short</option>
+              <option value="paragraph">paragraph</option>
+            </select>
+            <label class="muted"><input type="checkbox" class="field-required" /> required</label>
+            <input class="field-placeholder flex-1 bg-transparent px-2 py-1 rounded" placeholder="placeholder text" />
+          </div>
+        </div>
+        <button class="removeFieldBtn px-2 py-1 bg-red-600 rounded text-white">X</button>
+      </div>
+    </div>
+  </template>
+
+  <!-- modal sample overlay -->
+  <div id="modalOverlay" style="display:none;position:fixed;inset:0;z-index:60;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);">
+    <div style="width:420px;background:#2f3136;border-radius:8px;padding:12px;color:#dcddde;">
+      <div class="flex justify-between items-center mb-3">
+        <div id="modalTitle" class="font-semibold">Open ticket (sample)</div>
+        <button id="modalClose" class="px-2 py-1 bg-slate-700 rounded">Close</button>
+      </div>
+      <div id="modalFields" style="max-height:60vh;overflow:auto;"></div>
+      <div class="mt-3 flex justify-end">
+        <button id="modalCancel" class="px-3 py-2 bg-slate-600 rounded mr-2">Cancel</button>
+        <button id="modalSubmit" class="px-3 py-2 bg-indigo-600 rounded">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Frontend JS: similar to previous but with prefix support
+    const guildSelect = document.getElementById('guildSelect');
+    const channelSelect = document.getElementById('channelSelect');
+    const categorySelect = document.getElementById('categorySelect');
+    const panelTitle = document.getElementById('panelTitle');
+    const panelDescription = document.getElementById('panelDescription');
+    const panelColor = document.getElementById('panelColor');
+    const respondOpening = document.getElementById('respondOpening');
+    const detailsEmbedTitle = document.getElementById('detailsEmbedTitle');
+    const detailsEmbedColor = document.getElementById('detailsEmbedColor');
+    const pinnedContent = document.getElementById('pinnedContent');
+    const enabledPinned = document.getElementById('enabledPinned');
+    const pinAfterPost = document.getElementById('pinAfterPost');
+    const postPanelBtn = document.getElementById('postPanelBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const addOptionBtn = document.getElementById('addOptionBtn');
+    const optionsContainer = document.getElementById('optionsContainer');
+    const optionTpl = document.getElementById('optionTpl');
+    const fieldTpl = document.getElementById('fieldTpl');
+    const previewTitle = document.getElementById('previewTitle');
+    const previewDesc = document.getElementById('previewDesc');
+    const previewEmbedTitle = document.getElementById('previewEmbedTitle');
+    const previewEmbedFields = document.getElementById('previewEmbedFields');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalFields = document.getElementById('modalFields');
+    const modalClose = document.getElementById('modalClose');
+    const modalCancel = document.getElementById('modalCancel');
+    const modalSubmit = document.getElementById('modalSubmit');
+
+    let cfg = null;
+    let currentGuild = null;
+
+    function toast(msg, isErr=false) {
+      const node = document.createElement('div');
+      node.className = `fixed left-1/2 -translate-x-1/2 bottom-8 px-4 py-2 rounded shadow ${isErr ? 'bg-red-600' : 'bg-slate-900/80'} text-white`;
+      node.textContent = msg; document.body.appendChild(node);
+      setTimeout(()=> node.classList.add('opacity-0'), 2200); setTimeout(()=> node.remove(), 2600);
+    }
+
+    function uid(prefix='id'){ return prefix + Date.now().toString(36) + Math.floor(Math.random()*1000); }
+    function escapeHtml(s){ if(!s) return ''; return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+
+    async function fetchGuilds(){
+      try {
+        const res = await fetch('/api/guilds');
+        const list = await res.json();
+        guildSelect.innerHTML = '<option value="">-- choose server --</option>';
+        list.forEach(g => { const o=document.createElement('option'); o.value=g.id; o.textContent=g.name; guildSelect.appendChild(o); });
+      } catch(e){ guildSelect.innerHTML = '<option value="">Bot not ready</option>'; }
+    }
+
+    guildSelect.addEventListener('change', async ()=> {
+      const gid = guildSelect.value; if (!gid) return; currentGuild = gid; await loadChannels(gid); await loadConfig(gid);
+    });
+
+    async function loadChannels(gid){
+      try {
+        const res = await fetch(`/api/guilds/${gid}/channels`);
+        const list = await res.json();
+        const cats = list.filter(c=>c.type===4);
+        const texts = list.filter(c=>c.type===0);
+        channelSelect.innerHTML = '<option value="">-- choose channel --</option>';
+        texts.forEach(t => { const o=document.createElement('option'); o.value=t.id; const parent=cats.find(c=>c.id===t.parentId); o.textContent = parent ? `${parent.name} / ${t.name}` : t.name; channelSelect.appendChild(o); });
+        categorySelect.innerHTML = '<option value="">— choose category —</option>';
+        cats.forEach(cat => { const o=document.createElement('option'); o.value=cat.id; o.textContent=cat.name; categorySelect.appendChild(o); });
+      } catch (e) { channelSelect.innerHTML = '<option value="">Failed</option>'; categorySelect.innerHTML = '<option value="">Failed</option>'; }
+    }
+
+    function makeFieldElement(f=null) {
+      const el = fieldTpl.content.firstElementChild.cloneNode(true);
+      const idEl = el.querySelector('.field-id');
+      const labelEl = el.querySelector('.field-label');
+      const styleEl = el.querySelector('.field-style');
+      const reqEl = el.querySelector('.field-required');
+      const placeholderEl = el.querySelector('.field-placeholder');
+      const rmBtn = el.querySelector('.removeFieldBtn');
+      const fid = f && f.id ? f.id : uid('fld');
+      idEl.value = fid; labelEl.value = f && f.label ? f.label : ''; styleEl.value = f && f.style ? f.style : 'short'; reqEl.checked = !!(f && f.required); placeholderEl.value = f && f.placeholder ? f.placeholder : '';
+      rmBtn.addEventListener('click', ()=> { el.remove(); refreshPreview(); });
+      return el;
+    }
+
+    function makeOptionElement(opt=null) {
+      const el = optionTpl.content.firstElementChild.cloneNode(true);
+      const idField = el.querySelector('.opt-id');
+      const prefixField = el.querySelector('.opt-prefix');
+      const labelField = el.querySelector('.opt-label');
+      const descField = el.querySelector('.opt-desc');
+      const fieldsList = el.querySelector('.fieldsList');
+      const addFieldBtn = el.querySelector('.addFieldBtn');
+      const removeAllBtn = el.querySelector('.removeAllFieldsBtn');
+      const upBtn = el.querySelector('.btn-up');
+      const downBtn = el.querySelector('.btn-down');
+      const removeBtn = el.querySelector('.btn-remove');
+      const showModalBtn = el.querySelector('.showModalBtn');
+      const respondArea = el.querySelector('.opt-respond');
+      const respondUseEmbed = el.querySelector('.opt-respondUseEmbed');
+      const includeAdjust = el.querySelector('.include-adjustprize');
+      const isPrize = el.querySelector('.opt-isPrize');
+
+      const uidVal = opt && opt.id ? opt.id : uid('opt');
+      idField.value = uidVal;
+      prefixField.value = opt && opt.prefix ? opt.prefix : '';
+      labelField.value = opt && opt.label ? opt.label : '';
+      descField.value = opt && opt.description ? opt.description : '';
+      respondArea.value = opt && opt.respondContent ? opt.respondContent : '';
+      respondUseEmbed.checked = !!(opt && opt.respondUseEmbed);
+      includeAdjust.checked = !!(opt && opt.includeAdjustPrize);
+      isPrize.checked = !!(opt && opt.isPrize);
+
+      fieldsList.innerHTML = '';
+      const fields = (opt && Array.isArray(opt.form)) ? opt.form : [];
+      fields.forEach(f => fieldsList.appendChild(makeFieldElement(f)));
+
+      addFieldBtn.addEventListener('click', (e)=> { e.preventDefault(); fieldsList.appendChild(makeFieldElement()); refreshPreview(); });
+      removeAllBtn.addEventListener('click', (e)=> { e.preventDefault(); fieldsList.innerHTML=''; refreshPreview(); });
+
+      // auto add prizeAmount when isPrize toggled
+      isPrize.addEventListener('change', () => {
+        if (isPrize.checked) {
+          const exists = Array.from(fieldsList.querySelectorAll('.field-item')).some(n => n.querySelector('.field-id').value === 'prizeAmount' || n.querySelector('.field-label').value.toLowerCase().includes('prize'));
+          if (!exists) fieldsList.appendChild(makeFieldElement({ id:'prizeAmount', label:'Prize amount', style:'short', required:true, placeholder:'$100 or 100c' }));
+          else Array.from(fieldsList.querySelectorAll('.field-item')).forEach(n => { const idv = n.querySelector('.field-id').value; if (idv==='prizeAmount' || n.querySelector('.field-label').value.toLowerCase().includes('prize')) n.querySelector('.field-required').checked = true; });
+        }
+        refreshPreview();
+      });
+
+      showModalBtn.addEventListener('click', (e)=> {
+        e.preventDefault();
+        modalTitle.textContent = `Open ticket: ${labelField.value || 'Sample'}`;
+        modalFields.innerHTML = '';
+        const nodes = Array.from(fieldsList.querySelectorAll('.field-item'));
+        nodes.forEach(fn => {
+          const lbl = fn.querySelector('.field-label').value || 'Field';
+          const style = fn.querySelector('.field-style').value;
+          const ph = fn.querySelector('.field-placeholder').value || '';
+          const wrapper = document.createElement('div'); wrapper.className = 'mb-3';
+          const label = document.createElement('div'); label.textContent = lbl; label.style.fontWeight='600';
+          const input = document.createElement('div');
+          if (style === 'short') input.innerHTML = `<input disabled placeholder="${escapeHtml(ph)}" class="w-full mt-1 px-3 py-2 bg-[#36393f] border border-[#2f3136] rounded" />`;
+          else input.innerHTML = `<textarea disabled placeholder="${escapeHtml(ph)}" class="w-full mt-1 px-3 py-2 bg-[#36393f] border border-[#2f3136] rounded"></textarea>`;
+          wrapper.appendChild(label); wrapper.appendChild(input);
+          modalFields.appendChild(wrapper);
+        });
+        modalOverlay.style.display = 'flex';
+      });
+
+      upBtn.addEventListener('click', ()=> { const prev = el.previousElementSibling; if (prev) el.parentElement.insertBefore(el, prev); refreshPreview(); });
+      downBtn.addEventListener('click', ()=> { const next = el.nextElementSibling; if (next) el.parentElement.insertBefore(next, el); refreshPreview(); });
+      removeBtn.addEventListener('click', ()=> { el.remove(); refreshPreview(); });
+
+      // drag handlers
+      el.addEventListener('dragstart', (ev) => { ev.dataTransfer.setData('text/plain', idField.value); el.classList.add('dragging'); });
+      el.addEventListener('dragend', () => el.classList.remove('dragging'));
+      el.addEventListener('dragover', (ev) => { ev.preventDefault(); el.classList.add('drag-over'); });
+      el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+      el.addEventListener('drop', (ev) => {
+        ev.preventDefault(); el.classList.remove('drag-over');
+        const dragId = ev.dataTransfer.getData('text/plain');
+        const dragged = Array.from(optionsContainer.children).find(n => n.querySelector('.opt-id').value === dragId);
+        if (dragged && dragged !== el) optionsContainer.insertBefore(dragged, el);
+        refreshPreview();
+      });
+
+      [prefixField, labelField, descField, respondArea, respondUseEmbed, includeAdjust, isPrize].forEach(i => i.addEventListener('input', refreshPreview));
+      return el;
+    }
+
+    function renderOptionsFromCfg() {
+      optionsContainer.innerHTML = '';
+      if (!cfg || !Array.isArray(cfg.options)) return;
+      cfg.options.forEach(o => optionsContainer.appendChild(makeOptionElement(o)));
+      refreshPreview();
+    }
+
+    async function loadConfig(gid) {
+      try { const res = await fetch(`/api/config/${gid}`); cfg = await res.json(); } catch { cfg = null; }
+      populateUI();
+    }
+
+    function populateUI() {
+      if (!cfg) { exampleClick(); return; }
+      panelTitle.value = cfg.panelEmbed?.title || '';
+      panelDescription.value = cfg.panelEmbed?.description || '';
+      panelColor.value = cfg.panelEmbed?.color ? '#' + cfg.panelEmbed.color.toString(16).padStart(6,'0') : '#1E90FF';
+      respondOpening.value = cfg.respondOpeningGlobal || 'Hey there! {user}\\nSupport will be with you shortly.';
+      detailsEmbedTitle.value = cfg.detailsEmbed?.title || 'Details';
+      detailsEmbedColor.value = cfg.detailsEmbed?.color ? '#' + cfg.detailsEmbed.color.toString(16).padStart(6,'0') : '#2ea043';
+      pinnedContent.value = cfg.pinnedMessage?.content || '';
+      enabledPinned.checked = !!cfg.pinnedMessage?.enabled;
+      pinAfterPost.checked = !!cfg.pinnedMessage?.pinnedAfterPost;
+      if (cfg.categoryId) {
+        const opt = Array.from(categorySelect.options).find(o=>o.value===cfg.categoryId);
+        if (opt) categorySelect.value = cfg.categoryId;
+      }
+      renderOptionsFromCfg();
+    }
+
+    function collectCfgFromUI() {
+      const optsEls = Array.from(optionsContainer.children);
+      const options = optsEls.map(node => {
+        const fieldsNodes = Array.from(node.querySelectorAll('.field-item'));
+        const form = fieldsNodes.map(fn => ({ id: fn.querySelector('.field-id').value, label: fn.querySelector('.field-label').value || 'Field', style: fn.querySelector('.field-style').value, required: fn.querySelector('.field-required').checked, placeholder: fn.querySelector('.field-placeholder').value || '' }));
+        return {
+          id: node.querySelector('.opt-id').value,
+          prefix: node.querySelector('.opt-prefix').value || '',
+          label: node.querySelector('.opt-label').value || 'Unnamed',
+          description: node.querySelector('.opt-desc').value || '',
+          isPrize: node.querySelector('.opt-isPrize').checked,
+          form,
+          includeAdjustPrize: node.querySelector('.include-adjustprize').checked,
+          respondContent: node.querySelector('.opt-respond').value || '',
+          respondUseEmbed: node.querySelector('.opt-respondUseEmbed').checked
+        };
+      });
+      let colorInt = 0x1E90FF;
+      try { const hex = (panelColor.value || '#1E90FF').replace('#',''); colorInt = parseInt(hex,16); } catch {}
+      let detailsColor = 0x2ea043;
+      try { const hex = (detailsEmbedColor.value || '#2ea043').replace('#',''); detailsColor = parseInt(hex,16); } catch {}
+      return {
+        panelEmbed: { title: panelTitle.value || 'Ticket Panel', description: panelDescription.value || '', color: colorInt },
+        respondOpeningGlobal: respondOpening.value || 'Hello {user}, support will be with you shortly.',
+        detailsEmbed: { title: detailsEmbedTitle.value || 'Details', color: detailsColor },
+        options,
+        categoryId: categorySelect.value || null,
+        ticketCounter: cfg && typeof cfg.ticketCounter === 'number' ? cfg.ticketCounter : 0,
+        pinnedMessage: { enabled: enabledPinned.checked, content: pinnedContent.value || '', pinnedAfterPost: pinAfterPost.checked, messageId: cfg?.pinnedMessage?.messageId || null }
+      };
+    }
+
+    async function saveConfig() {
+      if (!currentGuild) return toast('Choose server first', true);
+      const body = collectCfgFromUI();
+      try {
+        const res = await fetch(`/api/config/${currentGuild}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+        if (!res.ok) throw new Error('Save failed');
+        cfg = body;
+        toast('Saved');
+      } catch (e) { console.error(e); toast('Save failed', true); }
+    }
+
+    async function postPanel() {
+      if (!currentGuild) return toast('Choose server first', true);
+      if (!channelSelect.value) return toast('Choose channel', true);
+      await saveConfig();
+      const body = { guildId: currentGuild, channelId: channelSelect.value, pin: pinAfterPost.checked };
+      try {
+        const res = await fetch('/api/postpanel', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+        const j = await res.json();
+        if (!res.ok) throw new Error(j.error || 'Post failed');
+        toast('Panel posted');
+      } catch (e) { console.error(e); toast('Post failed: ' + e.message, true); }
+    }
+
+    function refreshPreview() {
+      const d = collectCfgFromUI();
+      previewTitle.textContent = d.panelEmbed.title;
+      previewDesc.textContent = d.panelEmbed.description;
+      previewEmbedTitle.textContent = d.detailsEmbed.title;
+      previewEmbedFields.innerHTML = '';
+      d.options.forEach(o => {
+        const el = document.createElement('div'); el.className = 'mt-2 p-2 bg-slate-800 rounded';
+        if (o.isPrize) {
+          el.innerHTML = `<div class="font-medium">${escapeHtml(o.label)} <span class="text-xs muted">[${escapeHtml(o.prefix||o.id)}]</span></div><div class="muted text-xs">${escapeHtml(o.description)}</div><div class="small muted mt-1">Prize option — fields: ${o.form.map(f => `${escapeHtml(f.label)}${f.required ? ' (required)' : ''}`).join(', ')}</div>`;
+        } else {
+          el.innerHTML = `<div class="font-medium">${escapeHtml(o.label)} <span class="text-xs muted">[${escapeHtml(o.prefix||o.id)}]</span></div><div class="muted text-xs">${escapeHtml(o.description)}</div><div class="small muted mt-1">Non-prize — responds only</div>`;
+        }
+        previewEmbedFields.appendChild(el);
+      });
+    }
+
+    // drag & drop container
+    optionsContainer.addEventListener('dragover', (e)=> e.preventDefault());
+    optionsContainer.addEventListener('drop', (e)=> {
+      e.preventDefault();
+      const dragId = e.dataTransfer.getData('text/plain');
+      const dragged = Array.from(optionsContainer.children).find(n => n.querySelector('.opt-id').value === dragId);
+      if (dragged) optionsContainer.appendChild(dragged);
+      refreshPreview();
+    });
+
+    // modal controls
+    modalClose.addEventListener('click', ()=> modalOverlay.style.display='none');
+    modalCancel.addEventListener('click', ()=> modalOverlay.style.display='none');
+    modalSubmit.addEventListener('click', ()=> modalOverlay.style.display='none');
+
+    document.getElementById('exampleBtn').addEventListener('click', exampleClick);
+    function exampleClick() {
+      cfg = null;
+      panelTitle.value='Ticket Panel';
+      panelDescription.value='Select an option to open a ticket.';
+      panelColor.value='#1E90FF';
+      respondOpening.value = 'Hey there! {user}\\nIf you want to claim your prize, provide proof and wallet address.';
+      detailsEmbedTitle.value='Details';
+      detailsEmbedColor.value='#2ea043';
+      optionsContainer.innerHTML='';
+      optionsContainer.appendChild(makeOptionElement({ id:'prize', prefix:'PRZ', label:'Prize / Payout', description:'Report a payout', isPrize:true, form:[{id:'summary',label:'Short description / summary',style:'paragraph',required:true},{id:'prizeAmount',label:'Prize amount',style:'short',required:true,placeholder:'$100 or 100c'},{id:'prizeDetails',label:'Prize details',style:'paragraph',required:false}], includeAdjustPrize:true, respondContent:'Thank you {user}, we received your claim.' , respondUseEmbed:false }));
+      optionsContainer.appendChild(makeOptionElement({ id:'other', prefix:'OTH', label:'Other Support', description:'General support', isPrize:false, form:[{id:'summary',label:'Short description / summary',style:'paragraph',required:true}], includeAdjustPrize:false, respondContent:'Thanks {user} — staff will assist you shortly.', respondUseEmbed:false }));
+      refreshPreview();
+    }
+
+    // events
+    addOptionBtn.addEventListener('click', ()=> { optionsContainer.appendChild(makeOptionElement()); refreshPreview(); });
+    saveBtn.addEventListener('click', saveConfig);
+    postPanelBtn.addEventListener('click', postPanel);
+
+    (async function init(){ await fetchGuilds(); })();
+  </script>
+</body>
+</html>
