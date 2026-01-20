@@ -1,0 +1,44 @@
+<!doctype html>
+cfg = await res.json();
+document.getElementById('editor').style.display = 'block';
+document.getElementById('panelTitle').value = cfg.panelMessage.title || '';
+document.getElementById('panelDescription').value = cfg.panelMessage.description || '';
+document.getElementById('categoryId').value = cfg.categoryId || '';
+renderOptions();
+}
+function renderOptions(){
+const list = document.getElementById('optionsList'); list.innerHTML='';
+cfg.options.forEach((o, idx)=>{
+const div = document.createElement('div'); div.style.borderTop='1px solid #123'; div.style.padding='8px 0';
+div.innerHTML = `<label>Label</label><input id='opt_label_${idx}' value='${o.label}' />
+<label>Description</label><input id='opt_desc_${idx}' value='${o.description||''}' />
+<label>isPrize</label><select id='opt_prize_${idx}'><option value='false'>false</option><option value='true'>true</option></select>
+<label>ticketMessage</label><textarea id='opt_msg_${idx}'>${o.ticketMessage||''}</textarea>
+<button onclick='removeOption(${idx})'>Remove</button>`;
+list.appendChild(div);
+document.getElementById(`opt_prize_${idx}`).value = o.isPrize ? 'true' : 'false';
+});
+}
+function addOption(){
+cfg.options.push({id: 'opt'+Date.now(), label:'New option', description:'', isPrize:false, ticketMessage:'Please describe.'});
+renderOptions();
+}
+function removeOption(i){ cfg.options.splice(i,1); renderOptions(); }
+async function saveConfig(){
+cfg.panelMessage.title = document.getElementById('panelTitle').value;
+cfg.panelMessage.description = document.getElementById('panelDescription').value;
+cfg.categoryId = document.getElementById('categoryId').value;
+// read options
+cfg.options.forEach((o, idx)=>{
+o.label = document.getElementById(`opt_label_${idx}`).value;
+o.description = document.getElementById(`opt_desc_${idx}`).value;
+o.isPrize = document.getElementById(`opt_prize_${idx}`).value === 'true';
+o.ticketMessage = document.getElementById(`opt_msg_${idx}`).value;
+});
+const res = await fetch(`/api/config/${currentGuild}`, {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(cfg)});
+if(res.ok) alert('Saved'); else alert('Save failed');
+}
+function postPanel(){ alert('Use /postpanel inside your Discord server to post the panel.'); }
+</script>
+</body>
+</html>
