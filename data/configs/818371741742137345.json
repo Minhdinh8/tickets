@@ -1,0 +1,72 @@
+{
+  "panelEmbed": {
+    "title": "Support ticket",
+    "description": "Hello! Please select an option below.",
+    "color": 2003199
+  },
+  "respondOpeningGlobal": "Hey there! {user}",
+  "detailsEmbed": {
+    "title": "Details",
+    "color": 3055683
+  },
+  "options": [
+    {
+      "id": "other",
+      "prefix": "",
+      "label": "Other Support",
+      "description": "General support",
+      "isPrize": false,
+      "form": [
+        {
+          "id": "fldmklglfmr938",
+          "label": "What is your issue?",
+          "style": "short",
+          "required": true,
+          "placeholder": ""
+        }
+      ],
+      "includeAdjustPrize": false,
+      "respondContent": "",
+      "respondUseEmbed": false
+    },
+    {
+      "id": "prize",
+      "prefix": "",
+      "label": "Claim a prize",
+      "description": "Congratulation! Select this option to claim your prize.",
+      "isPrize": true,
+      "form": [],
+      "includeAdjustPrize": false,
+      "respondContent": "",
+      "respondUseEmbed": false
+    },
+    {
+      "id": "optmkmjyv1d343",
+      "prefix": "call",
+      "label": "Call wins",
+      "description": "Claim your call win right here.",
+      "isPrize": false,
+      "form": [
+        {
+          "id": "fldmkmk1dke891",
+          "label": "You under code wahy right? ",
+          "style": "short",
+          "required": true,
+          "placeholder": "right?"
+        }
+      ],
+      "includeAdjustPrize": false,
+      "respondContent": "Hello there {user}\nIn order to claim your call win(s), please provide 2 ss and on-site litecoin address like this: https://media.discordapp.net/attachments/1379480465844736150/1463146361204641947/image.png?ex=6970c4bc&is=696f733c&hm=c1571ce0c871828888cb7d5cc3dc56b53090e4bac74adb9516e999da10399ebc&=&format=webp&quality=lossless&width=1244&height=618 https://media.discordapp.net/attachments/1379480465844736150/1463146361582125108/image.png?ex=6970c4bc&is=696f733c&hm=22fd196a6aebf126dcddecde8ab2f919964653f2df2b83121877a0453b15cad1&=&format=webp&quality=lossless&width=1244&height=616",
+      "respondUseEmbed": false
+    }
+  ],
+  "categoryId": "818371741742137346",
+  "ticketCounter": 11,
+  "pinnedMessage": {
+    "enabled": false,
+    "content": "",
+    "pinnedAfterPost": false,
+    "messageId": "1463149990892273810"
+  },
+  "transcriptChannelId": "1463152504769351705"
+}
